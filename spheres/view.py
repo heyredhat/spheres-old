@@ -3,12 +3,48 @@ import uuid
 import re
 import sys
 
-class FuncWrap:
-    def __init__(self, func):
-        self.func = func
-
-    def __call__(self, *args):
-        return self.func(*args)
+class jsCall:
+    def __init__(self, obj, name):
+        self.obj = obj
+        self.name = name
+        
+    def __call__(self, *argz):
+        data = []
+        finished = False
+        null = False
+        again = False
+        def __callback__(*args):
+            nonlocal data, finished, null, again
+            args = list(args)
+            if len(args) == 1 and args[0] == None:
+                finished = True
+                null = True
+                raise NameError("name '%s' of %s is not defined"\
+                                     % (name, type(self).__name__))
+            elif len(args) == 2 and args[0] == None and args[1] == None:
+                self.obj.js_create()
+                data = "loading..."
+                finished = True
+                again = True
+            else:
+                data = args
+                finished = True
+             
+        sockets.emit("call", {"uuid": self.obj.uuid,\
+                              "func": self.name,\
+                              "args": argz},\
+                              callback=__callback__)
+        t = 0
+        while not finished:
+            t += 1
+            if t > 100:
+                finished = True
+                raise Exception("Timed out!")
+            sockets.sleep(0.01)
+        if again:
+            return self.__call__(*argz)
+        if not null:
+            return data[0] if len(data) == 1 else data
 
 class View(object):
     __slots__ = ["_obj", "__weakref__"]
@@ -21,75 +57,43 @@ class View(object):
         self.__update_func__ = kwargs["update"]\
                          if "update" in kwargs else None
 
+    ####
+
     def js_create(self, args={}):
         sockets.emit("create", {"class": "View",\
                                 "uuid": self.uuid,\
                                 "args": args})
 
-    def test(self, a=1):
-        print(a)
-        return a
-
     def u(self):
         print("workspace.objects['%s']" % self.uuid)
 
     def flush(self, options={}):
-       sockets.emit("call", {"uuid": self.uuid,\
-                             "func": "update",\
-                             "args": self.__update_func__(self)},\
-                             callback=lambda args: True) 
+        return jsCall(self, "update")(self.__update_func__(self))
 
+    ####
+    
     def __del__(self):
         sockets.emit("destroy", {"uuid": self.uuid})
         #super().__del__()
     
     def __getattr__(self, name):
         if hasattr(object, name):
-            return getattr(object.__getattribute__(self, "_obj"), name)
+            value = getattr(object.__getattribute__(self, "_obj"), name)
+            self.flush()
         else:
-            def __getattr_server__(*argz):
-                finished = False
-                data = []
-                null = False
-                def __callback__(*args):
-                    nonlocal finished, data, null
-                    args = list(args)
-                    if len(args) == 1 and args[0] == None:
-                        finished = True
-                        null = True
-                        raise NameError("name '%s' of %s is not defined" % (name, type(self).__name__))
-                    elif len(args) == 2 and args[0] == None and args[1] == None:
-                        self.js_create()
-                        data = "loading..."
-                        finished = True
-                    else:
-                        data = args
-                        finished = True
-                     
-                sockets.emit("call", {"uuid": self.uuid,\
-                                      "func": name,\
-                                      "args": argz},\
-                                      callback=__callback__)
-                t = 0
-                while not finished:
-                    t += 1
-                    if t > 100:
-                        finished = True
-                        raise Exception("Timed out!")
-                    sockets.sleep(0.01)
-                if not null:
-                    return data[0] if len(data) == 1 else data
-            return FuncWrap(__getattr_server__)
+            return jsCall(self, name)
 
     def __delattr__(self, name):
         if hasattr(object, name):
             delattr(object.__getattribute__(self, "_obj"), name)
+            self.flush()
         else:
             super().__delattr__(name)
 
     def __setattr__(self, name, value):
         if hasattr(object, name):
             setattr(object.__getattribute__(self, "_obj"), name, value)
+            self.flush()
         else:
             super().__setattr__(name, value)
     
@@ -123,7 +127,9 @@ class View(object):
     def _create_class_proxy(cls, theclass):        
         def make_method(name):
             def method(self, *args, **kw):
-                return getattr(object.__getattribute__(self, "_obj"), name)(*args, **kw)
+                value = getattr(object.__getattribute__(self, "_obj"), name)(*args, **kw)
+                self.flush()
+                return value
             return method
         namespace = {}
         for name in cls._special_names:

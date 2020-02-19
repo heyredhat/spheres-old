@@ -2,16 +2,16 @@ class View {
 	constructor(uuid, args) {
 		this.loop = this.loop.bind(this);
 		this.update = this.update.bind(this);
-		this.vshow = this.vshow.bind(this);
 		this.destroy = this.destroy.bind(this);
+		this.call = this.call.bind(this);
+		this.vshow = this.vshow.bind(this);
 
 		this.uuid = uuid;
 		this.args = args;
-		this.temp = undefined;
+		this.data = undefined;
 	}
 
 	vshow(ar) {
-		console.log("wow");
 		return "whatthe"+ar;
 	}
 
@@ -21,6 +21,7 @@ class View {
 
 	update(data) {
 		console.log(data);
+		this.data = data;
 		return "updated!";
 	}
 
