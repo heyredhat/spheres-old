@@ -1,0 +1,38 @@
+<html>
+	<head>
+		<link rel="stylesheet" 
+ 		      type="text/css" 
+ 		      href="{{ url_for('static', filename='css/spheres.css') }}">
+	</head>
+	<body>
+		<div id="workspace"></div>
+
+		<script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>
+
+		<script src="{{ url_for('static', filename='js/three.js/build/three.min.js') }}"></script>
+	 	<script src="{{ url_for('static', filename='js/three.js/examples/js/controls/DragControls.js') }}"></script>
+	 	<script src="{{ url_for('static', filename='js/three.js/examples/js/controls/TransformControls.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/three.js/examples/js/utils/SceneUtils.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/three.js/examples/js/controls/OrbitControls.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/three.js/examples/js/controls/TrackballControls.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/three.js/examples/js/effects/OutlineEffect.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/three.js/examples/js/shaders/CopyShader.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/three.js/examples/js/shaders/AfterimageShader.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/three.js/examples/js/postprocessing/EffectComposer.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/three.js/examples/js/postprocessing/RenderPass.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/three.js/examples/js/shaders/HalftoneShader.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/three.js/examples/js/postprocessing/ShaderPass.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/three.js/examples/js/shaders/PixelShader.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/three.js/examples/js/postprocessing/AfterImagePass.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/three.js/examples/js/postprocessing/OutlinePass.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/three.js/examples/js/postprocessing/HalftonePass.js') }}"></script>
+
+		<script src="{{ url_for('static', filename='js/spheres/Workspace.js') }}">		
+		</script>
+		<script src="{{ url_for('static', filename='js/spheres/Sphere.js') }}">		
+		</script>
+		<script type="text/javascript">
+			var workspace = new Workspace("workspace");
+		</script>
+	</body>
+</html>
