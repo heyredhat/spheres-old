@@ -25,15 +25,28 @@ class Workspace {
 	setup_sockets() {
 		this.sockets = io.connect(null, {port: location.port, rememberTransport: false});
 		this.sockets.on("create", function (data) {
-			if (data["class"] == "Sphere") {
-				this.objects[data["uuid"]] = new Sphere(data["uuid"], data["args"]);
-			}
+			this.objects[data["uuid"]] = new (eval(data["class"]))(data["uuid"], data["args"]);
 		}.bind(this));
-		this.sockets.on("call", function (data) {
+		this.sockets.on("call", function (data, callback) {
+			var found = false;
 			for (var obj_id in this.objects) {
 				if (obj_id == data["uuid"]) {
-					this.objects[obj_id][data["func"]](data["args"]);
+					found = true;
+					if (data["func"] in this.objects[obj_id]) {
+						callback(this.objects[obj_id][data["func"]](data["args"]));
+					} else {
+						callback(undefined);
+					}
 				}
+			}
+			if (!found) {
+				callback(undefined)
+			}
+		}.bind(this));
+		this.sockets.on("destroy", function (data) {
+			if (data["uuid"] in this.objects) {
+				this.objects[data["uuid"]].destroy();
+				delete this.objects[data["uuid"]];
 			}
 		}.bind(this));
 	}

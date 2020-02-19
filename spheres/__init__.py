@@ -5,6 +5,7 @@ import threading
 import socketio
 import eventlet
 import eventlet.wsgi
+import asyncio 
 
 ########################################################################################
 
@@ -31,6 +32,14 @@ def disconnect(sid):
 from spheres.view import *
 from spheres.sphere import *
 from spheres.magic import *
+
+@sockets.on('call')
+def call(sid, data):
+    if data["uuid"] in View.objects:
+    	obj = View.objects[data["uuid"]]
+    	if hasattr(obj, data["func"]):
+    		return getattr(obj, data["func"])(*data["args"])
+    return None
 
 def __init__(app, sockets):
 	print("WELCOME TO SPHERES")
