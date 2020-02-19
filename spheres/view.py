@@ -14,20 +14,30 @@ class View(object):
     __slots__ = ["_obj", "__weakref__"]
     objects = {}
 
-    def test(self, a=1):
-        print(a)
-        return a
-
-    def u():
-        print("workspace.objects['%s']" % self.uuid)
-
     def __init__(self, obj, *args, **kwargs):
         self.uuid = str(uuid.uuid4())
         View.objects[self.uuid] = self
         object.__setattr__(self, "_obj", obj)
+        self.__update_func__ = kwargs["update"]\
+                         if "update" in kwargs else None
+
+    def js_create(self, args={}):
         sockets.emit("create", {"class": "View",\
-                            "uuid": self.uuid,\
-                            "args": {}})  
+                                "uuid": self.uuid,\
+                                "args": args})
+
+    def test(self, a=1):
+        print(a)
+        return a
+
+    def u(self):
+        print("workspace.objects['%s']" % self.uuid)
+
+    def flush(self, options={}):
+       sockets.emit("call", {"uuid": self.uuid,\
+                             "func": "update",\
+                             "args": self.__update_func__(self)},\
+                             callback=lambda args: True) 
 
     def __del__(self):
         sockets.emit("destroy", {"uuid": self.uuid})
@@ -48,6 +58,10 @@ class View(object):
                         finished = True
                         null = True
                         raise NameError("name '%s' of %s is not defined" % (name, type(self).__name__))
+                    elif len(args) == 2 and args[0] == None and args[1] == None:
+                        self.js_create()
+                        data = "loading..."
+                        finished = True
                     else:
                         data = args
                         finished = True
@@ -56,7 +70,12 @@ class View(object):
                                       "func": name,\
                                       "args": argz},\
                                       callback=__callback__)
+                t = 0
                 while not finished:
+                    t += 1
+                    if t > 100:
+                        finished = True
+                        raise Exception("Timed out!")
                     sockets.sleep(0.01)
                 if not null:
                     return data[0] if len(data) == 1 else data

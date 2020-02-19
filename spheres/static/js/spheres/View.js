@@ -21,6 +21,7 @@ class View {
 
 	update(data) {
 		console.log(data);
+		return "updated!";
 	}
 
 	destroy() {

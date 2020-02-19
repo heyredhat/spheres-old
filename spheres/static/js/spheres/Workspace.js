@@ -40,7 +40,7 @@ class Workspace {
 				}
 			}
 			if (!found) {
-				callback(undefined)
+				callback(undefined, undefined);
 			}
 		}.bind(this));
 		this.sockets.on("destroy", function (data) {
