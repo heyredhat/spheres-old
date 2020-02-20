@@ -34,6 +34,9 @@ class View {
 			document.body.appendChild(this.div);
 			$("#"+this.uuid).draggable({cancel: "h1, p"});
 			$("#"+this.uuid).resizable();
+			$("#"+this.uuid).dblclick(function () {
+				this.destroy();
+			}.bind(this));
 		}
 		this.visible = true;
 	}
