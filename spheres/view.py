@@ -20,7 +20,7 @@ class jsCall:
                 finished = True
                 null = True
                 raise NameError("name '%s' of %s is not defined"\
-                                     % (name, type(self).__name__))
+                                     % (self.name, type(self.obj).__name__))
             elif len(args) == 2 and args[0] == None and args[1] == None:
                 self.obj.js_create()
                 data = "loading..."
@@ -51,9 +51,10 @@ class View(object):
     objects = {}
 
     def __init__(self, obj, *args, **kwargs):
-        self.uuid = str(uuid.uuid4())
-        View.objects[self.uuid] = self
         object.__setattr__(self, "_obj", obj)
+        self.uuid = str(uuid.uuid4())
+        self._class = type(obj)
+        View.objects[self.uuid] = self
         self.__update_func__ = kwargs["update"]\
                          if "update" in kwargs else None
 
@@ -71,27 +72,40 @@ class View(object):
         return jsCall(self, "update")(self.__update_func__(self))
 
     ####
-    
+
     def __del__(self):
         sockets.emit("destroy", {"uuid": self.uuid})
         #super().__del__()
     
     def __getattr__(self, name):
-        if hasattr(object, name):
-            value = getattr(object.__getattribute__(self, "_obj"), name)
-            self.flush()
+        if hasattr(object.__getattribute__(self, "_obj"), name):
+            attr = getattr(object.__getattribute__(self, "_obj"), name)
+            if callable(attr):
+                def __temp__(*args):
+                    value = attr(*args)
+                    if type(value) == self._class:
+                        object.__setattr__(self, "_obj", value)
+                        self.flush()
+                        return value#self ############################
+                    else:
+                        self.flush()
+                        return value
+                return __temp__
+            else:
+                self.flush()
+                return attr
         else:
             return jsCall(self, name)
 
     def __delattr__(self, name):
-        if hasattr(object, name):
+        if hasattr(object.__getattribute__(self, "_obj"), name):
             delattr(object.__getattribute__(self, "_obj"), name)
             self.flush()
         else:
             super().__delattr__(name)
 
     def __setattr__(self, name, value):
-        if hasattr(object, name):
+        if hasattr(object.__getattribute__(self, "_obj"), name):
             setattr(object.__getattribute__(self, "_obj"), name, value)
             self.flush()
         else:
@@ -127,7 +141,16 @@ class View(object):
     def _create_class_proxy(cls, theclass):        
         def make_method(name):
             def method(self, *args, **kw):
+                #print(getattr(object.__getattribute__(self, "_obj"), name))
                 value = getattr(object.__getattribute__(self, "_obj"), name)(*args, **kw)
+                #print(value)
+                #print(type(value))
+                #print(theclass)
+                #print()
+                if type(value) == theclass:
+                    object.__setattr__(self, "_obj", value)
+                    self.flush()
+                    return self
                 self.flush()
                 return value
             return method

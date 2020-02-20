@@ -9,6 +9,23 @@ class View {
 		this.uuid = uuid;
 		this.args = args;
 		this.data = undefined;
+
+
+		this.div = document.createElement("div");
+		this.div.id = this.uuid
+		this.div.style.position = "absolute";
+		this.div.style.left = "100px";
+		this.div.style.right = "100px";
+		this.div.style.height = "50px";
+		this.div.style.width = "100px";
+		this.div.style.background = "white";
+		this.div.class = "ui-widget-content";
+		var stuff = document.getElementById("stuff");
+		stuff.appendChild(this.div);
+		this.live = true;
+		//console.log("hi");
+		$("#"+this.uuid).draggable();
+
 	}
 
 	vshow(ar) {
@@ -20,13 +37,21 @@ class View {
 	}
 
 	update(data) {
-		console.log(data);
+		//console.log(data);
 		this.data = data;
+		if (this.live == false) {
+			var stuff = document.getElementById("stuff");
+			stuff.appendChild(this.div);
+			this.live = true;
+		}
+		this.div.innerHTML = data;
 		return "updated!";
 	}
 
 	destroy() {
-		console.log("destroyed");
+		this.div.parentNode.removeChild(this.div);
+		this.live = false;
+		return "destroyed!";
 	}
 
 	call(func) {
