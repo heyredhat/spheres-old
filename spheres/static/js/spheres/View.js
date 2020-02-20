@@ -25,8 +25,14 @@ class View {
 		this.div = document.createElement("div");
 		this.div.id = this.uuid;
 		this.div.className = "view ui-widget-content";
+		this.head = document.createElement("h1");
+		this.head.innerHTML = this.uuid;
+		this.div.appendChild(this.head);
+		this.body = document.createElement("p");
+		this.div.appendChild(this.body)
 		document.body.appendChild(this.div);
-		$("#"+this.uuid).draggable();
+		$("#"+this.uuid).draggable({cancel: "h1, p"});
+		$("#"+this.uuid).resizable();
 		this.visible = true;
 	}
 
@@ -37,7 +43,7 @@ class View {
 				document.body.appendChild(this.div);
 				this.visible = true;
 			}
-			this.div.innerHTML = data;
+			this.body.innerHTML = data;
 		}
 		return "refreshed!"
 	}

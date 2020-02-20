@@ -20,20 +20,34 @@
 }
 
 .view {
-  color: yellow;
+  overflow: auto;
+  display:  inline-block;
+  height: 200px;
+  width: 400px;
+  padding-left: 5px;
+  padding-right: 5px;
+
   border-style: solid;
   border-width: 3px;
   border-radius: 5px;
-  padding: 15px;
-  line-height: 0.5em;
-  background-color: white;
-  color: black;
-  font-family: 'Fascinate Inline', cursive;
-  font-size: 1.5em;
-  overflow: auto;
-  display:  inline-block;
-  opacity: 0.9;
-  height: 100px;
-  width: 200px;
   border-color: black;
+  
+  opacity: 0.9;
+  color: black;
+  background-color: white;
+
+  font-family: 'Fascinate Inline', cursive;
+  
+  /*line-height: 0.5em;*/
+}
+
+.view h1 {
+  border-bottom: 1px solid black;
+  font-size: 1em;
+  background-color: rgb(230, 230, 230)  
+}
+
+.view p {
+  text-align: center;
+  font-size: 1.5em;
 }
