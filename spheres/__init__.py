@@ -18,9 +18,6 @@ log.setLevel(logging.ERROR)
 
 ########################################################################################
 
-def js_err(s, opts={}):
-    return {**{"error": s}, **opts}
-
 def err(s):
     print(colored("\n> ", "yellow")+colored(s, "magenta", attrs=['bold']))
 
@@ -64,9 +61,9 @@ def call(sid, data):
         if hasattr(obj, data["func"]):
             return getattr(obj, data["func"])(*data["args"])
         else:
-            return js_err("server attribute %s not found!" % data["func"])
+            return {"error": "server attribute %s not found!" % data["func"]}
     else:
-        return js_err("server object %s not found!" % data["uuid"])
+        return {"error": "server object %s not found!" % data["uuid"]}
 
 ########################################################################################
 

@@ -5,6 +5,8 @@ class Workspace {
 		this.setup_scene = this.setup_scene.bind(this);
 		this.setup_cameras = this.setup_cameras.bind(this);
 		this.setup_postprocessing = this.setup_postprocessing.bind(this);
+		this.setup_models = this.setup_models.bind(this);
+		this.get_model = this.get_model.bind(this);
 		this.loop = this.loop.bind(this);
 
 		/****************************************************/
@@ -19,6 +21,7 @@ class Workspace {
 		this.setup_scene();
 		this.setup_cameras();
 		this.setup_postprocessing();
+		this.setup_models();
 		this.loop();
 	}
 
@@ -126,6 +129,25 @@ class Workspace {
 		this.composer.addPass(this.outline_pass1);
 		this.composer.addPass(this.outline_pass2);
 		this.composer.addPass(new THREE.AfterimagePass(0.78));
+	}
+
+	setup_models() {
+		this.models = {};
+		this.loader = new THREE.GLTFLoader().setPath("../../static/models/arrow/");
+		this.get_model("arrow", 'scene.gltf');
+	}
+
+	get_model(name, url) {
+		if(this.models != undefined) {
+			if (this.models[name]) {
+			    return this.models[name].then((o) => o.clone());
+			}
+		 	return this.models[name] = new Promise((resolve, reject) => {
+	    		this.loader.load(url, function (gltf) {
+	     			resolve(gltf.scene);
+	    		}, undefined, reject);
+		  	});
+		}
 	}
 
 	loop() {

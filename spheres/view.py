@@ -26,7 +26,7 @@ class jsCall:
                                      % (error["attribute"],\
                                         type(self.view).__name__))
                 elif error.startswith("client object"):
-                    sockets.emit("create", {"class": "View",\
+                    sockets.emit("create", {"class": self.view.__js_class__,\
                                             "uuid": self.view.uuid,\
                                             "args": {}})
                     again = True
@@ -62,7 +62,11 @@ class View(object):
         self.uuid = str(uuid.uuid4())
         View.views[self.uuid] = self
 
+        self.__outer_class__ = type(self).__name__[:type(self).__name__.index("(")]
         self.__inner_class__ = type(obj)
+        self.__js_class__ = kwargs["js_class"]\
+                                if "js_class" in kwargs\
+                                    else self.__outer_class__
         self.__refresh_func__ = kwargs["for_refresh"]\
                                     if "for_refresh" in kwargs\
                                         else lambda view: str(view)

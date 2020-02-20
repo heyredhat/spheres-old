@@ -1,6 +1,6 @@
 class View {
 	constructor(uuid, options) {
-		this.setup_div = this.setup_div.bind(this);
+		this.setup = this.setup.bind(this);
 		this.refresh_from = this.refresh_from.bind(this);
 		this.loop = this.loop.bind(this);
 		this.destroy = this.destroy.bind(this);
@@ -17,22 +17,24 @@ class View {
 		/****************************************************/
 
 		if (!(this.options["suppress_default_view"])) {
-			this.setup_div();
+			this.setup();
 		}
 	}
 
-	setup_div() {
-		this.div = document.createElement("div");
-		this.div.id = this.uuid;
-		this.div.className = "view ui-widget-content";
-		this.head = document.createElement("h1");
-		this.head.innerHTML = this.uuid;
-		this.div.appendChild(this.head);
-		this.body = document.createElement("p");
-		this.div.appendChild(this.body)
-		document.body.appendChild(this.div);
-		$("#"+this.uuid).draggable({cancel: "h1, p"});
-		$("#"+this.uuid).resizable();
+	setup() {
+		if (!(this.options["suppress_default_view"])) {
+			this.div = document.createElement("div");
+			this.div.id = this.uuid;
+			this.div.className = "view ui-widget-content";
+			this.head = document.createElement("h1");
+			this.head.innerHTML = this.uuid;
+			this.div.appendChild(this.head);
+			this.body = document.createElement("p");
+			this.div.appendChild(this.body)
+			document.body.appendChild(this.div);
+			$("#"+this.uuid).draggable({cancel: "h1, p"});
+			$("#"+this.uuid).resizable();
+		}
 		this.visible = true;
 	}
 
