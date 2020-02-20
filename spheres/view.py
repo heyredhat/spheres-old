@@ -70,7 +70,11 @@ class View(object):
     ########################################################################################
 
     def js(self):
-        show("workspace.views['%s']" % self.uuid)
+        print("workspace.views['%s']" % self.uuid)
+
+    def set(self, value):
+        object.__setattr__(self, "_obj", value)
+        self.flush()
 
     def flush(self):
         return jsCall(self, "refresh_from")(self.__refresh_func__(self))
@@ -81,7 +85,14 @@ class View(object):
         if hasattr(object.__getattribute__(self, "_obj"), name):
             attribute = getattr(object.__getattribute__(self, "_obj"), name)
             if callable(attribute):
-                def __wrapper__(*args):
+                def __wrapper__(*args, **kwargs):
+                    args = [object.__getattribute__(arg, "_obj")\
+                            if "View" in type(arg).__name__\
+                            else arg\
+                                for arg in args]
+                    kwargs = dict([(key, object.__getattribute__(val, "_obj")\
+                            if "View" in type(val).__name__\
+                            else val ) for key, val in kwargs.items()])
                     value = attribute(*args)
                     if type(value) == self.__inner_class__:
                         object.__setattr__(self, "_obj", value)
@@ -148,8 +159,14 @@ class View(object):
     def _create_class_proxy(cls, inner_class):        
         def make_method(name):
             def method(self, *args, **kwargs):
-                value = getattr(\
-                    object.__getattribute__(self, "_obj"), name)(*args, **kwargs)
+                args = [object.__getattribute__(arg, "_obj")\
+                            if "View" in type(arg).__name__\
+                            else arg\
+                                for arg in args]
+                kwargs = dict([(key, object.__getattribute__(val, "_obj")\
+                            if "View" in type(val).__name__\
+                            else val ) for key, val in kwargs.items()])
+                value = getattr(object.__getattribute__(self, "_obj"), name)(*args, **kwargs)
                 if type(value) == inner_class:
                     object.__setattr__(self, "_obj", value)
                     self.flush()

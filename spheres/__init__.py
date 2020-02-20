@@ -59,8 +59,8 @@ def disconnect(sid):
 
 @sockets.on("call")
 def call(sid, data):
-    if data["uuid"] in View.objects:
-        obj = View.objects[data["uuid"]]
+    if data["uuid"] in View.views:
+        obj = View.views[data["uuid"]]
         if hasattr(obj, data["func"]):
             return getattr(obj, data["func"])(*data["args"])
         else:

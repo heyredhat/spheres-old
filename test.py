@@ -1,5 +1,6 @@
 from spheres import *
 import numpy as np
 
-#view = View("julian"")
-v = View(np.array([0,1j]))
+a = View(np.array([0,1j]))
+b = View(1)
+c = View(["julian"])
