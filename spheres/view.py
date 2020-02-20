@@ -67,9 +67,12 @@ class View(object):
         self.__js_class__ = kwargs["js_class"]\
                                 if "js_class" in kwargs\
                                     else self.__outer_class__
-        self.__refresh_func__ = kwargs["for_refresh"]\
-                                    if "for_refresh" in kwargs\
+        self.__to_client__ = kwargs["to_client"]\
+                                    if "to_client" in kwargs\
                                         else lambda view: str(view)
+        self.__from_client__ = kwargs["from_client"]\
+                                    if "from_client" in kwargs\
+                                        else lambda data: object.__getattribute__(self, "_obj")
 
     ########################################################################################
 
@@ -81,7 +84,11 @@ class View(object):
         self.flush()
 
     def flush(self):
-        return jsCall(self, "refresh_from")(self.__refresh_func__(self))
+        return jsCall(self, "refresh_from_server")(self.__to_client__(self))
+
+    def refresh_from_client(self, data):
+        object.__setattr__(self, "_obj", self.__from_client__(data))
+        #self.flush()
 
     ########################################################################################
     

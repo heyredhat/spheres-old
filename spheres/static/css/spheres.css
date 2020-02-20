@@ -21,7 +21,6 @@
 
 .view {
   overflow: auto;
-  display:  inline-block;
   height: 200px;
   width: 400px;
   padding-left: 5px;

@@ -6,6 +6,7 @@ class Sphere extends View {
 		this.redraw = this.redraw.bind(this);
 		this.global_local = this.global_local.bind(this);
 		this.local_global = this.local_global.bind(this);
+		this.setup_drag_controls = this.setup_drag_controls.bind(this);
 
 		/****************************************************/
 
@@ -22,6 +23,8 @@ class Sphere extends View {
 
 		this.setup();
 	}
+
+	/****************************************************/
 
 	setup() {
 		super.setup();
@@ -57,7 +60,9 @@ class Sphere extends View {
 		}.bind(this));
 	}
 
-	refresh_from(data) {
+	/****************************************************/
+
+	refresh_from_server(data) {
 		this.stars = data["stars"];
 		this.phase = data["phase"];
 		this.redraw();
@@ -67,6 +72,9 @@ class Sphere extends View {
 	redraw() { 
 		if (this.visible == false) {
 			this.setup();
+		}
+		if (this.stars.length == 0) {
+			this.setup_drag_controls();
 		}
 		if (this.stars.length > this.vstars.length) {
 			for (var i = 0; i < this.stars.length-this.vstars.length+1; ++i) {
@@ -85,6 +93,7 @@ class Sphere extends View {
 				workspace.outline_pass1.selectedObjects = 
 					workspace.outline_pass1.selectedObjects.concat([vstar]);
 			}
+			this.setup_drag_controls();
 		} else if (this.stars.length < this.vstars.length) {
 			for (var i = 0; i < this.vstars.length-this.stars.length+1; ++i) {
 				this.vstars[i].visible = false;
@@ -104,7 +113,7 @@ class Sphere extends View {
 		if (this.varrow != undefined) {
 			this.varrow.position.setX(this.vsphere.position.x);
 			this.varrow.position.setY(this.vsphere.position.y);
-			this.varrow.position.setZ(this.vsphere.position.x);
+			this.varrow.position.setZ(this.vsphere.position.z);
 
 			if (this.stars.length == 0) {
 				this.varrow.visible = false;
@@ -120,6 +129,8 @@ class Sphere extends View {
 			}
 		}
 	}
+
+	/****************************************************/
 
 	loop() {
 		super.loop();
@@ -145,5 +156,39 @@ class Sphere extends View {
 
 	local_global(point) {
 		return point.clone().multiplyScalar(this.options["radius"]).add(this.vsphere.position.clone())
+	}
+
+	/****************************************************/
+
+	setup_drag_controls() {
+		if (this.drag_controls != undefined) {
+			this.drag_controls.deactivate();
+		}
+		this.drag_controls = new THREE.DragControls(
+									this.vstars.concat([this.vsphere]), 
+									workspace.camera, 
+									workspace.renderer.domElement);
+
+		this.drag_controls.addEventListener("dragstart", function(event) {
+			workspace.camera_controls.enabled = false; 
+		}.bind(this));
+		this.drag_controls.addEventListener("dragend", function (event) { 
+			workspace.camera_controls.enabled = true; 
+		}.bind(this));
+		this.drag_controls.addEventListener("drag", function (event) {
+			if (this.vstars.includes(event.object)) {
+				var sphere_xyz = event.object.position.sub(this.vsphere.position).normalize()
+				var i = this.vstars.indexOf(event.object);
+				this.stars[i] = [sphere_xyz.x, sphere_xyz.y, sphere_xyz.z];
+				var xyz = sphere_xyz.multiplyScalar(this.options["radius"]).add(this.vsphere.position);
+				event.object.position.setX(xyz.x);
+				event.object.position.setY(xyz.y);
+				event.object.position.setZ(xyz.z);
+				this.call("refresh_from_client")({"stars": this.stars});
+			} else if (event.object == this.vsphere) {
+
+			}
+			this.redraw();
+		}.bind(this));
 	}
 }

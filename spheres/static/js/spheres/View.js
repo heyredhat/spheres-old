@@ -1,7 +1,7 @@
 class View {
 	constructor(uuid, options) {
 		this.setup = this.setup.bind(this);
-		this.refresh_from = this.refresh_from.bind(this);
+		this.refresh_from_server = this.refresh_from_server.bind(this);
 		this.loop = this.loop.bind(this);
 		this.destroy = this.destroy.bind(this);
 		this.call = this.call.bind(this);
@@ -41,7 +41,7 @@ class View {
 		this.visible = true;
 	}
 
-	refresh_from(data) {
+	refresh_from_server(data) {
 		this.data = data;
 		if (!this.options["suppress_default_view"]) {
 			if (!this.visible) {
