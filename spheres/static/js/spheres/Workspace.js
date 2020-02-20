@@ -10,7 +10,7 @@ class Workspace {
 		/****************************************************/
 
 		this.div = document.getElementById(div);
-		this.objects = {};
+		this.views = {};
 
 		/****************************************************/
 
@@ -23,30 +23,35 @@ class Workspace {
 	}
 
 	setup_sockets() {
-		this.sockets = io.connect(null, {port: location.port, rememberTransport: false});
+		this.sockets = io.connect(null, {port: location.port, 
+										 rememberTransport: false});
 		this.sockets.on("create", function (data) {
-			this.objects[data["uuid"]] = new (eval(data["class"]))(data["uuid"], data["args"]);
+			this.views[data["uuid"]] = 
+				new (eval(data["class"]))(data["uuid"], data["options"]);
 		}.bind(this));
 		this.sockets.on("call", function (data, callback) {
 			var found = false;
-			for (var obj_id in this.objects) {
-				if (obj_id == data["uuid"]) {
+			for (var view_id in this.views) {
+				if (view_id == data["uuid"]) {
 					found = true;
-					if (data["func"] in this.objects[obj_id]) {
-						callback(this.objects[obj_id][data["func"]](data["args"]));
+					var view = this.views[data["uuid"]];
+					if (data["func"] in view) {
+						callback(view[data["func"]](...data["args"]));
 					} else {
-						callback(undefined);
+						callback({"error": `client attribute ${data["func"]} not found!`,
+								  "attribute": data["func"]});
 					}
 				}
 			}
 			if (!found) {
-				callback(undefined, undefined);
+				callback({"error": `client object ${data["uuid"]} not found!`,
+						  "uuid": data["uuid"]});
 			}
 		}.bind(this));
 		this.sockets.on("destroy", function (data) {
-			if (data["uuid"] in this.objects) {
-				this.objects[data["uuid"]].destroy();
-				delete this.objects[data["uuid"]];
+			if (data["uuid"] in this.views) {
+				this.views[data["uuid"]].destroy();
+				delete this.views[data["uuid"]];
 			}
 		}.bind(this));
 	}
@@ -86,9 +91,9 @@ class Workspace {
 		this.camera_controls.zoomSpeed = 2;
 
 		window.addEventListener('resize', function (event) {
-				this.renderer.setSize(this.div.offsetWidth, this.div.offsetHeight);
-				this.camera.aspect = this.div.offsetWidth/this.div.offsetHeight;
-				this.camera.updateProjectionMatrix();
+			this.renderer.setSize(this.div.offsetWidth, this.div.offsetHeight);
+			this.camera.aspect = this.div.offsetWidth/this.div.offsetHeight;
+			this.camera.updateProjectionMatrix();
 		}.bind(this));
 	}
 
@@ -96,8 +101,11 @@ class Workspace {
 		this.composer = new THREE.EffectComposer(this.renderer);
 		this.composer.addPass(new THREE.RenderPass(this.scene, this.camera));
 		
-		this.outline_pass1 = new THREE.OutlinePass(new THREE.Vector2(this.div.offsetWidth, 
-									this.div.offsetHeight), this.scene, this.camera, []);
+		this.outline_pass1 = new THREE.OutlinePass(
+								new THREE.Vector2(
+									this.div.offsetWidth, 
+									this.div.offsetHeight), 
+										this.scene, this.camera, []);
 		this.outline_pass1.visibleEdgeColor = new THREE.Color(1,1,1);
 		this.outline_pass1.hiddenEdgeColor = new THREE.Color(1,1,1);
 		this.outline_pass1.edgeThickness = 1.0;
@@ -105,8 +113,11 @@ class Workspace {
 		this.outline_pass1.edgeGlow = 0.3;
 		this.outline_pass1.pulsePeriod = 3;
 
-		this.outline_pass2 = new THREE.OutlinePass(new THREE.Vector2(this.div.offsetWidth, 
-									this.div.offsetHeight), this.scene, this.camera, []);
+		this.outline_pass2 = new THREE.OutlinePass(
+								new THREE.Vector2(
+									this.div.offsetWidth, 
+									this.div.offsetHeight), 
+										this.scene, this.camera, []);
 		this.outline_pass2.visibleEdgeColor = new THREE.Color(0,0,0);
 		this.outline_pass2.hiddenEdgeColor = new THREE.Color(0,0,0);
 		this.outline_pass2.edgeThickness = 1;
@@ -119,9 +130,9 @@ class Workspace {
 
 	loop() {
 		requestAnimationFrame(this.loop);
-		for (var obj_id in this.objects) {
-			if (this.objects[obj_id] != undefined) {
-				this.objects[obj_id].loop();
+		for (var view_id in this.views) {
+			if (this.views[view_id] != undefined) {
+				this.views[view_id].loop();
 			}
 		}
 		this.camera_controls.update();

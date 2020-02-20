@@ -1,56 +1,56 @@
 class View {
-	constructor(uuid, args) {
+	constructor(uuid, options) {
+		this.setup_div = this.setup_div.bind(this);
+		this.refresh_from = this.refresh_from.bind(this);
 		this.loop = this.loop.bind(this);
-		this.update = this.update.bind(this);
 		this.destroy = this.destroy.bind(this);
 		this.call = this.call.bind(this);
-		this.vshow = this.vshow.bind(this);
+
+		/****************************************************/
 
 		this.uuid = uuid;
-		this.args = args;
+		this.options = options != undefined ? options :
+						{"suppress_default_view": false}
 		this.data = undefined;
+		this.visible = false;
 
+		/****************************************************/
 
-		this.div = document.createElement("div");
-		this.div.id = this.uuid
-		this.div.style.position = "absolute";
-		this.div.style.left = "100px";
-		this.div.style.right = "100px";
-		this.div.style.height = "50px";
-		this.div.style.width = "100px";
-		this.div.style.background = "white";
-		this.div.class = "ui-widget-content";
-		var stuff = document.getElementById("stuff");
-		stuff.appendChild(this.div);
-		this.live = true;
-		//console.log("hi");
-		$("#"+this.uuid).draggable();
-
+		if (!(this.options["suppress_default_view"])) {
+			this.setup_div();
+		}
 	}
 
-	vshow(ar) {
-		return "whatthe"+ar;
+	setup_div() {
+		this.div = document.createElement("div");
+		this.div.id = this.uuid;
+		this.div.className = "view ui-widget-content";
+		document.body.appendChild(this.div);
+		$("#"+this.uuid).draggable();
+		this.visible = true;
+	}
+
+	refresh_from(data) {
+		this.data = data;
+		if (!this.options["suppress_default_view"]) {
+			if (!this.visible) {
+				document.body.appendChild(this.div);
+				this.visible = true;
+			}
+			this.div.innerHTML = data;
+		}
+		return "refreshed!"
 	}
 
 	loop() {
 
 	}
 
-	update(data) {
-		//console.log(data);
-		this.data = data;
-		if (this.live == false) {
-			var stuff = document.getElementById("stuff");
-			stuff.appendChild(this.div);
-			this.live = true;
-		}
-		this.div.innerHTML = data;
-		return "updated!";
-	}
-
 	destroy() {
-		this.div.parentNode.removeChild(this.div);
-		this.live = false;
+		if (!this.options["suppress_default_view"]) {
+			this.div.parentNode.removeChild(this.div);
+		}
+		this.visible = false;
 		return "destroyed!";
 	}
 
@@ -59,17 +59,17 @@ class View {
 			return new Promise( function (resolve, reject) {
 				if (args == undefined) {
 					args = [];
-				} else if (! (args instanceof Array)) {
+				} else if (!(args instanceof Array)) {
 					args = [args];
 				}
-				var data = undefined;
-				workspace.sockets.emit("call", 
-									   {"uuid": this.uuid, 
-									    "func": func, 
-									    "args": args},
-									   function (data) {
-									   		resolve(data);
-									   });
+				workspace.sockets.emit(
+				 	"call", 
+					   {"uuid": this.uuid, 
+					    "func": func, 
+					    "args": args},
+					   function (returned) {
+					   		resolve(returned);
+					   });
 			}.bind(this));
 		}.bind(this);
 	}

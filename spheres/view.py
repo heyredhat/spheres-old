@@ -1,38 +1,43 @@
 from spheres import *
 import uuid
-import re
-import sys
 
 class jsCall:
-    def __init__(self, obj, name):
-        self.obj = obj
+    def __init__(self, view, name):
+        self.view = view
         self.name = name
         
-    def __call__(self, *argz):
+    def __call__(self, *args):
         data = []
-        finished = False
         null = False
         again = False
-        def __callback__(*args):
-            nonlocal data, finished, null, again
-            args = list(args)
-            if len(args) == 1 and args[0] == None:
-                finished = True
-                null = True
-                raise NameError("name '%s' of %s is not defined"\
-                                     % (self.name, type(self.obj).__name__))
-            elif len(args) == 2 and args[0] == None and args[1] == None:
-                self.obj.js_create()
-                data = "loading..."
-                finished = True
-                again = True
+        finished = False
+
+        def __callback__(*returned):
+            nonlocal data, null, again, finished
+            returned = list(returned)
+            if len(returned) == 1\
+                    and type(returned[0]) == type({})\
+                    and "error" in returned[0]:
+                error = returned[0]["error"]
+                if error.startswith("client attribute"):
+                    null = True
+                    finished = True
+                    raise NameError("name '%s' of %s is not defined"\
+                                     % (error["attribute"],\
+                                        type(self.view).__name__))
+                elif error.startswith("client object"):
+                    sockets.emit("create", {"class": "View",\
+                                            "uuid": self.view.uuid,\
+                                            "args": {}})
+                    again = True
+                    finished = True
             else:
-                data = args
+                data = returned
                 finished = True
              
-        sockets.emit("call", {"uuid": self.obj.uuid,\
+        sockets.emit("call", {"uuid": self.view.uuid,\
                               "func": self.name,\
-                              "args": argz},\
+                              "args": args},\
                               callback=__callback__)
         t = 0
         while not finished:
@@ -42,58 +47,53 @@ class jsCall:
                 raise Exception("Timed out!")
             sockets.sleep(0.01)
         if again:
-            return self.__call__(*argz)
+            return self.__call__(*args)
         if not null:
             return data[0] if len(data) == 1 else data
 
+########################################################################################
+
 class View(object):
+    views = {}
     __slots__ = ["_obj", "__weakref__"]
-    objects = {}
 
     def __init__(self, obj, *args, **kwargs):
         object.__setattr__(self, "_obj", obj)
         self.uuid = str(uuid.uuid4())
-        self._class = type(obj)
-        View.objects[self.uuid] = self
-        self.__update_func__ = kwargs["update"]\
-                         if "update" in kwargs else None
+        View.views[self.uuid] = self
 
-    ####
+        self.__inner_class__ = type(obj)
+        self.__refresh_func__ = kwargs["for_refresh"]\
+                                    if "for_refresh" in kwargs\
+                                        else lambda view: str(view)
 
-    def js_create(self, args={}):
-        sockets.emit("create", {"class": "View",\
-                                "uuid": self.uuid,\
-                                "args": args})
+    ########################################################################################
 
-    def u(self):
-        print("workspace.objects['%s']" % self.uuid)
+    def js(self):
+        show("workspace.views['%s']" % self.uuid)
 
-    def flush(self, options={}):
-        return jsCall(self, "update")(self.__update_func__(self))
+    def flush(self):
+        return jsCall(self, "refresh_from")(self.__refresh_func__(self))
 
-    ####
-
-    def __del__(self):
-        sockets.emit("destroy", {"uuid": self.uuid})
-        #super().__del__()
+    ########################################################################################
     
     def __getattr__(self, name):
         if hasattr(object.__getattribute__(self, "_obj"), name):
-            attr = getattr(object.__getattribute__(self, "_obj"), name)
-            if callable(attr):
-                def __temp__(*args):
-                    value = attr(*args)
-                    if type(value) == self._class:
+            attribute = getattr(object.__getattribute__(self, "_obj"), name)
+            if callable(attribute):
+                def __wrapper__(*args):
+                    value = attribute(*args)
+                    if type(value) == self.__inner_class__:
                         object.__setattr__(self, "_obj", value)
                         self.flush()
-                        return value#self ############################
+                        return value # or self?
                     else:
                         self.flush()
                         return value
-                return __temp__
+                return __wrapper__
             else:
                 self.flush()
-                return attr
+                return attribute
         else:
             return jsCall(self, name)
 
@@ -110,6 +110,11 @@ class View(object):
             self.flush()
         else:
             super().__setattr__(name, value)
+
+    ########################################################################################
+
+    def __del__(self):
+        sockets.emit("destroy", {"uuid": self.uuid})
     
     def __nonzero__(self):
         return bool(object.__getattribute__(self, "_obj"))
@@ -120,6 +125,8 @@ class View(object):
     def __repr__(self):
         return repr(object.__getattribute__(self, "_obj"))
     
+    ########################################################################################
+
     _special_names = [
         '__abs__', '__add__', '__and__', '__call__', '__cmp__', '__coerce__', 
         '__contains__', '__delitem__', '__delslice__', '__div__', '__divmod__', 
@@ -138,16 +145,12 @@ class View(object):
     ]
     
     @classmethod
-    def _create_class_proxy(cls, theclass):        
+    def _create_class_proxy(cls, inner_class):        
         def make_method(name):
-            def method(self, *args, **kw):
-                #print(getattr(object.__getattribute__(self, "_obj"), name))
-                value = getattr(object.__getattribute__(self, "_obj"), name)(*args, **kw)
-                #print(value)
-                #print(type(value))
-                #print(theclass)
-                #print()
-                if type(value) == theclass:
+            def method(self, *args, **kwargs):
+                value = getattr(\
+                    object.__getattribute__(self, "_obj"), name)(*args, **kwargs)
+                if type(value) == inner_class:
                     object.__setattr__(self, "_obj", value)
                     self.flush()
                     return self
@@ -156,26 +159,19 @@ class View(object):
             return method
         namespace = {}
         for name in cls._special_names:
-            if hasattr(theclass, name):
+            if hasattr(inner_class, name):
                 namespace[name] = make_method(name)
-        return type("%s(%s)" % (cls.__name__, theclass.__name__), (cls,), namespace)
+        return type("%s(%s)" % (cls.__name__, inner_class.__name__), (cls,), namespace)
     
     def __new__(cls, obj, *args, **kwargs):
-        """
-        creates an proxy instance referencing `obj`. 
-        (obj, *args, **kwargs) are passed to this class' __init__, 
-        so deriving classes can define an __init__ method of their own.
-        note: _class_proxy_cache is unique per deriving class (each deriving
-        class must hold its own cache)
-        """
         try:
             cache = cls.__dict__["_class_proxy_cache"]
         except KeyError:
             cls._class_proxy_cache = cache = {}
         try:
-            theclass = cache[obj.__class__]
+            inner_class = cache[obj.__class__]
         except KeyError:
-            cache[obj.__class__] = theclass = cls._create_class_proxy(obj.__class__)
-        ins = object.__new__(theclass)
-        theclass.__init__(ins, obj, *args, **kwargs)
-        return ins
+            cache[obj.__class__] = inner_class = cls._create_class_proxy(obj.__class__)
+        inself = object.__new__(inner_class)
+        inner_class.__init__(inself, obj, *args, **kwargs)
+        return inself
