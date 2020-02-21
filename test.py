@@ -4,9 +4,10 @@ import qutip as qt
 
 a = View(np.array([0,1j]))
 b = View(1)
-c = View(["julian"])
+c = View("julian")
 
-s = View(np.array([1,1]),\
+n = 8
+s = View(np.array([1]*n),\
 		 to_client=lambda view:\
 		 	{"stars": [xyz.tolist()\
 		 		for xyz in spin_XYZ(object.__getattribute__(view, "_obj"))],\
@@ -14,17 +15,17 @@ s = View(np.array([1,1]),\
 		 from_client=lambda data:\
 		 	XYZ_spin(data["stars"]),\
 		 js_class="Sphere")
+v = View("")
+v.listen(s, lambda sph: str(sph))
 
-#u = (-1j*0.01*qt.rand_herm(2)).expm().full()
-#q = qt.rand_ket(2).full().T[0]
-#input()
-#s.set(q)
-#a.set(q)
+input()
+u = (-1j*0.008*qt.rand_herm(n)).expm().full()
+s.loop_for(10000, lambda sph: np.dot(u, sph))
+
 #for i in range(1000):
-#	q = np.dot(u, q)
-#	s.set(q)
-#	a.set(q)
-	# gotta cut down on flushes and wait too
-#	sockets.sleep(0.01)
-	# should be able to add random listeners
-	# on updates...
+#	s << np.dot(u, s)
+#	sockets.sleep(0.01) # can't send em too quickly
+
+# have to cut down on flushes
+# need a list: funcs who need flushes
+# and add x[0] = 2 to it automatically?

@@ -42,7 +42,7 @@ class jsCall:
         t = 0
         while not finished:
             t += 1
-            if t > 100:
+            if t > 200:
                 finished = True
                 raise Exception("Timed out!")
             sockets.sleep(0.01)
@@ -62,6 +62,7 @@ class View(object):
         self.uuid = str(uuid.uuid4())
         View.views[self.uuid] = self
 
+        self.listeners = {}
         self.__outer_class__ = type(self).__name__[:type(self).__name__.index("(")]
         self.__inner_class__ = type(obj)
         self.__js_class__ = kwargs["js_class"]\
@@ -79,16 +80,46 @@ class View(object):
     def js(self):
         print("workspace.views['%s']" % self.uuid)
 
-    def set(self, value):
-        object.__setattr__(self, "_obj", value)
-        self.flush()
+    def set(self, value, silent=False):
+        if type(value) == self.__inner_class__:
+            object.__setattr__(self, "_obj", value)
+            if not silent:
+                self.flush()
+        else:
+            raise Exception("can't set %s to %s!" % (self.__inner_class__.__name__,
+                                                    type(value).__name__))
 
-    def flush(self):
-        return jsCall(self, "refresh_from_server")(self.__to_client__(self))
+    def __lshift__(self, value):
+        self.set(value)
+        return self
+
+    def flush(self, local=False):
+        for uuid, with_func in self.listeners.items():
+            if uuid in View.views:
+                View.views[uuid] << (with_func(self))
+        if not local:
+            return jsCall(self, "refresh_from_server")(self.__to_client__(self))
 
     def refresh_from_client(self, data):
         object.__setattr__(self, "_obj", self.__from_client__(data))
-        #self.flush()
+        self.flush(local=True)
+
+    def listen(self, to_whom, with_func):
+        to_whom.listeners[self.uuid] = with_func
+
+    def unlisten(self, to_whom):
+        del to_whom.listeners[self.uuid]
+
+    def loop_for(self, n, func, rate=1/8, sleep=0.001):
+        if n != 0:
+            for i in range(n):
+                if i % int(1/rate) == 0:
+                    self << func(self)
+                else:
+                    self.set(func(self), silent=True)
+                sockets.sleep(sleep)
+
+
 
     ########################################################################################
     
@@ -105,16 +136,11 @@ class View(object):
                             if "View" in type(val).__name__\
                             else val ) for key, val in kwargs.items()])
                     value = attribute(*args)
-                    if type(value) == self.__inner_class__:
-                        object.__setattr__(self, "_obj", value)
-                        self.flush()
-                        return value # or self?
-                    else:
-                        self.flush()
-                        return value
+                    #self.flush()
+                    return value
                 return __wrapper__
             else:
-                self.flush()
+                #self.flush()
                 return attribute
         else:
             return jsCall(self, name)
@@ -145,6 +171,7 @@ class View(object):
         return str(object.__getattribute__(self, "_obj"))
 
     def __repr__(self):
+        self.flush()
         return repr(object.__getattribute__(self, "_obj"))
     
     ########################################################################################
@@ -157,10 +184,10 @@ class View(object):
         '__idiv__', '__idivmod__', '__ifloordiv__', '__ilshift__', '__imod__', 
         '__imul__', '__int__', '__invert__', '__ior__', '__ipow__', '__irshift__', 
         '__isub__', '__iter__', '__itruediv__', '__ixor__', '__le__', '__len__', 
-        '__long__', '__lshift__', '__lt__', '__mod__', '__mul__', '__ne__', 
+        '__long__', '__lt__', '__mod__', '__mul__', '__ne__', #'__lshift__',
         '__neg__', '__oct__', '__or__', '__pos__', '__pow__', '__radd__', 
         '__rand__', '__rdiv__', '__rdivmod__', '__reduce__', '__reduce_ex__', 
-        '__repr__', '__reversed__', '__rfloorfiv__', '__rlshift__', '__rmod__', 
+        '__reversed__', '__rfloorfiv__', '__rlshift__', '__rmod__', #'__repr__',
         '__rmul__', '__ror__', '__rpow__', '__rrshift__', '__rshift__', '__rsub__', 
         '__rtruediv__', '__rxor__', '__setitem__', '__setslice__', '__sub__', 
         '__truediv__', '__xor__', 'next',
@@ -178,11 +205,7 @@ class View(object):
                             if "View" in type(val).__name__\
                             else val ) for key, val in kwargs.items()])
                 value = getattr(object.__getattribute__(self, "_obj"), name)(*args, **kwargs)
-                if type(value) == inner_class:
-                    object.__setattr__(self, "_obj", value)
-                    self.flush()
-                    return self
-                self.flush()
+                #self.flush()
                 return value
             return method
         namespace = {}

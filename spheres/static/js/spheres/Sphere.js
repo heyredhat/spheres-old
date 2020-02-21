@@ -18,6 +18,7 @@ class Sphere extends View {
 		this.options["position"] = this.options["position"] == undefined ? new THREE.Vector3(0,0,0) : undefined;
 		this.options["sphere_color"] = this.options["sphere_color"] == undefined ? new THREE.Color("rgb(0, 7, 209)") : undefined;
 		this.options["star_color"] = this.options["star_color"] == undefined ? new THREE.Color("rgb(255, 31, 135)") : undefined;
+		this.options["drag_rate"] = this.options["star_color"] == undefined ? new 1/8: undefined;
 
 		/****************************************************/
 
@@ -33,11 +34,11 @@ class Sphere extends View {
 					  		new THREE.MeshToonMaterial({
 							    bumpScale: 1,
 							    color: this.options["sphere_color"],
-							    reflectivity: 0.5,
+							    reflectivity: 0.4,
 							    shininess: 2,
 								envMap: workspace.cube_camera.renderTarget.texture,
 								transparent: true,
-								opacity: 0.9}));
+								opacity: 0.93}));
 		workspace.outline_pass2.selectedObjects = 
 				workspace.outline_pass2.selectedObjects.concat([this.vsphere]);
 	 	this.vwire_sphere = new THREE.Mesh(
@@ -56,6 +57,13 @@ class Sphere extends View {
 			function (result) {
 				this.varrow = result;
 				workspace.scene.add(this.varrow);
+				this.redraw();
+		}.bind(this));
+
+		workspace.get_model("sphere", "../../static/models/crystal.fbx").then(
+			function (result) {
+				this.vsphere2 = result;
+				workspace.scene.add(this.vsphere2);
 				this.redraw();
 		}.bind(this));
 	}
@@ -77,7 +85,12 @@ class Sphere extends View {
 			this.setup_drag_controls();
 		}
 		if (this.stars.length > this.vstars.length) {
-			for (var i = 0; i < this.stars.length-this.vstars.length+1; ++i) {
+			console.log("<");
+			console.log(this.stars.length);
+			console.log(this.vstars.length);
+			console.log("*");
+			var needs = this.stars.length-this.vstars.length;
+			for (var i = 0; i < needs; ++i) {
 				var vstar = new THREE.Mesh(
 					new THREE.SphereGeometry(0.15*this.options["radius"], 32, 16),
 					new THREE.MeshToonMaterial({
@@ -95,7 +108,8 @@ class Sphere extends View {
 			}
 			this.setup_drag_controls();
 		} else if (this.stars.length < this.vstars.length) {
-			for (var i = 0; i < this.vstars.length-this.stars.length+1; ++i) {
+			var doesnt_need = this.vstars.length-this.stars.length;
+			for (var i = 0; i < doesnt_need; ++i) {
 				this.vstars[i].visible = false;
 				this.vstars.pop();
 			}
@@ -184,7 +198,9 @@ class Sphere extends View {
 				event.object.position.setX(xyz.x);
 				event.object.position.setY(xyz.y);
 				event.object.position.setZ(xyz.z);
-				this.call("refresh_from_client")({"stars": this.stars});
+				if (Math.random() < 1/8) {
+					this.call("refresh_from_client")({"stars": this.stars});
+				}
 			} else if (event.object == this.vsphere) {
 
 			}
