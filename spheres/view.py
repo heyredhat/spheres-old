@@ -1,6 +1,8 @@
 from spheres import *
 import uuid
 
+########################################################################################
+
 class jsCall:
     def __init__(self, view, name):
         self.view = view
@@ -17,7 +19,7 @@ class jsCall:
             returned = list(returned)
             if len(returned) == 1\
                     and type(returned[0]) == type({})\
-                    and "error" in returned[0]:
+                        and "error" in returned[0]:
                 error = returned[0]["error"]
                 if error.startswith("client attribute"):
                     null = True
@@ -74,11 +76,12 @@ class View(object):
         self.__from_client__ = kwargs["from_client"]\
                                     if "from_client" in kwargs\
                                         else lambda data: object.__getattribute__(self, "_obj")
+        self.requires_flush = ["__delitem__",  "__delslice__", "__setitem__", "__setslice__",\
+                               "__repr__"]
+        if "requires_flush" in kwargs:
+            self.requires_flush.extend(kwargs["requires_flush"])
 
     ########################################################################################
-
-    def js(self):
-        print("workspace.views['%s']" % self.uuid)
 
     def set(self, value, silent=False):
         if type(value) == self.__inner_class__:
@@ -100,15 +103,21 @@ class View(object):
         if not local:
             return jsCall(self, "refresh_from_server")(self.__to_client__(self))
 
+    ########################################################################################
+
     def refresh_from_client(self, data):
         object.__setattr__(self, "_obj", self.__from_client__(data))
         self.flush(local=True)
+
+    ########################################################################################
 
     def listen(self, to_whom, with_func):
         to_whom.listeners[self.uuid] = with_func
 
     def unlisten(self, to_whom):
         del to_whom.listeners[self.uuid]
+
+    ########################################################################################
 
     def loop_for(self, n, func, rate=1/8, sleep=0.001):
         if n != 0:
@@ -119,7 +128,10 @@ class View(object):
                     self.set(func(self), silent=True)
                 sockets.sleep(sleep)
 
+    ########################################################################################
 
+    def js(self):
+        print("workspace.views['%s']" % self.uuid)
 
     ########################################################################################
     
@@ -136,11 +148,11 @@ class View(object):
                             if "View" in type(val).__name__\
                             else val ) for key, val in kwargs.items()])
                     value = attribute(*args)
-                    #self.flush()
+                    self.flush() if name in self.requires_flush else None
                     return value
                 return __wrapper__
             else:
-                #self.flush()
+                self.flush() if name in self.requires_flush else None
                 return attribute
         else:
             return jsCall(self, name)
@@ -171,9 +183,8 @@ class View(object):
         return str(object.__getattribute__(self, "_obj"))
 
     def __repr__(self):
-        self.flush()
         return repr(object.__getattribute__(self, "_obj"))
-    
+
     ########################################################################################
 
     _special_names = [
@@ -192,7 +203,7 @@ class View(object):
         '__rtruediv__', '__rxor__', '__setitem__', '__setslice__', '__sub__', 
         '__truediv__', '__xor__', 'next',
     ]
-    
+
     @classmethod
     def _create_class_proxy(cls, inner_class):        
         def make_method(name):
@@ -205,7 +216,7 @@ class View(object):
                             if "View" in type(val).__name__\
                             else val ) for key, val in kwargs.items()])
                 value = getattr(object.__getattribute__(self, "_obj"), name)(*args, **kwargs)
-                #self.flush()
+                self.flush() if name in self.requires_flush else None
                 return value
             return method
         namespace = {}

@@ -6,7 +6,6 @@
 	</head>
 	<body>
 		<div id="workspace"></div>
-		<div id="test"></div>
 		<script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>
 
 		<script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
@@ -35,10 +34,10 @@
 
 		<script src="{{ url_for('static', filename='js/spheres/Workspace.js') }}">	
 		</script>
-		<script src="{{ url_for('static', filename='js/spheres/View.js') }}">		
-		</script>
 		<script type="text/javascript">
 			var workspace = new Workspace("workspace");
+		</script>
+		<script src="{{ url_for('static', filename='js/spheres/View.js') }}">		
 		</script>
 		<script src="{{ url_for('static', filename='js/spheres/Sphere.js') }}">		
 		</script>

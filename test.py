@@ -29,3 +29,9 @@ s.loop_for(10000, lambda sph: np.dot(u, sph))
 # have to cut down on flushes
 # need a list: funcs who need flushes
 # and add x[0] = 2 to it automatically?
+
+# make listeners bidirectional
+
+# better sphere graphics
+
+# try subclassing

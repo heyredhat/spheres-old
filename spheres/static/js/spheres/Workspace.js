@@ -93,7 +93,7 @@ class Workspace {
 		this.camera_controls.rotateSpeed = 2;
 		this.camera_controls.zoomSpeed = 2;
 
-		window.addEventListener('resize', function (event) {
+		window.addEventListener("resize", function (event) {
 			this.renderer.setSize(this.div.offsetWidth, this.div.offsetHeight);
 			this.camera.aspect = this.div.offsetWidth/this.div.offsetHeight;
 			this.camera.updateProjectionMatrix();
@@ -128,13 +128,13 @@ class Workspace {
 
 		this.composer.addPass(this.outline_pass1);
 		this.composer.addPass(this.outline_pass2);
-		this.composer.addPass(new THREE.AfterimagePass(0.78));
+		this.composer.addPass(new THREE.AfterimagePass(0.68));
 	}
 
 	setup_models() {
 		this.models = {};
 		this.loader = new THREE.GLTFLoader().setPath("../../static/models/arrow/");
-		this.get_model("arrow", 'scene.gltf');
+		this.get_model("arrow", "scene.gltf");
 	}
 
 	get_model(name, url) {

@@ -18,9 +18,6 @@ log.setLevel(logging.ERROR)
 
 ########################################################################################
 
-def err(s):
-    print(colored("\n> ", "yellow")+colored(s, "magenta", attrs=['bold']))
-
 def show(s):
     print(colored("\n> ", "yellow")+colored(s, "magenta"))
 
@@ -51,8 +48,6 @@ def connect(sid, data):
 @sockets.on("disconnect")
 def disconnect(sid):
     show("%s disconnected" % sid)
-
-########################################################################################
 
 @sockets.on("call")
 def call(sid, data):
