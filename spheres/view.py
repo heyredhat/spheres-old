@@ -76,8 +76,7 @@ class View(object):
         self.__from_client__ = kwargs["from_client"]\
                                     if "from_client" in kwargs\
                                         else lambda data: object.__getattribute__(self, "_obj")
-        self.requires_flush = ["__delitem__",  "__delslice__", "__setitem__", "__setslice__",\
-                               "__repr__"]
+        self.requires_flush = ["__delitem__",  "__delslice__", "__setitem__", "__setslice__"]
         if "requires_flush" in kwargs:
             self.requires_flush.extend(kwargs["requires_flush"])
 
@@ -183,6 +182,7 @@ class View(object):
         return str(object.__getattribute__(self, "_obj"))
 
     def __repr__(self):
+        self.flush()
         return repr(object.__getattribute__(self, "_obj"))
 
     ########################################################################################

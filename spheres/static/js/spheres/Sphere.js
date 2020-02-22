@@ -59,13 +59,6 @@ class Sphere extends View {
 				workspace.scene.add(this.varrow);
 				this.redraw();
 		}.bind(this));
-
-		workspace.get_model("sphere", "../../static/models/crystal.fbx").then(
-			function (result) {
-				this.vsphere2 = result;
-				workspace.scene.add(this.vsphere2);
-				this.redraw();
-		}.bind(this));
 	}
 
 	/****************************************************/
@@ -85,10 +78,6 @@ class Sphere extends View {
 			this.setup_drag_controls();
 		}
 		if (this.stars.length > this.vstars.length) {
-			console.log("<");
-			console.log(this.stars.length);
-			console.log(this.vstars.length);
-			console.log("*");
 			var needs = this.stars.length-this.vstars.length;
 			for (var i = 0; i < needs; ++i) {
 				var vstar = new THREE.Mesh(

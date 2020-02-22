@@ -32,8 +32,20 @@ class View {
 			this.body = document.createElement("p");
 			this.div.appendChild(this.body)
 			document.body.appendChild(this.div);
-			$("#"+this.uuid).draggable({cancel: "h1, p"});
 			$("#"+this.uuid).resizable();
+			$("#"+this.uuid).draggable({cancel: "h1, p"})
+			$("#"+this.uuid).mouseover(function () {
+           		var max = 0;
+           		for (var uuid in workspace.views) {
+           			var view = workspace.views[uuid];
+           			if (view.div != undefined) {
+           				if (view.div.style.zIndex > max) {
+           					max = Number(view.div.style.zIndex);
+           				}
+           			}
+           		}
+           		this.div.style.zIndex = max+1;
+			}.bind(this));
 			$("#"+this.uuid).dblclick(function () {
 				this.destroy();
 			}.bind(this));
