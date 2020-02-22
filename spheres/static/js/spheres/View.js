@@ -62,7 +62,6 @@ class View {
 			}
 			this.body.innerHTML = data;
 		}
-		return "refreshed!"
 	}
 
 	loop() {
@@ -74,7 +73,6 @@ class View {
 			this.div.parentNode.removeChild(this.div);
 		}
 		this.visible = false;
-		return "destroyed!";
 	}
 
 	call(func) {

@@ -82,6 +82,13 @@ class View(object):
 
     ########################################################################################
 
+    @property
+    def __class__(self):
+        return self.__inner_class__
+
+    def get(self):
+        return object.__getattribute__(self, "_obj")
+
     def set(self, value, silent=False):
         if type(value) == self.__inner_class__:
             object.__setattr__(self, "_obj", value)

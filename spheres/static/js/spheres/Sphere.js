@@ -141,10 +141,11 @@ class Sphere extends View {
 
 	destroy() {
 		for(var i = 0; i < this.vstars.length; ++i) {
-			this.vstars[i].visible = false;
+			//this.vstars[i].visible = false;
 			workspace.scene.remove(this.vstars[i]);
 		}
 		this.vstars = [];
+		this.drag_controls.deactivate();
 		workspace.scene.remove(this.vsphere);
 		workspace.scene.remove(this.vwire_frame);
 		workspace.scene.remove(this.varrow);

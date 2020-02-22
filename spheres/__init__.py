@@ -41,8 +41,11 @@ def root():
 
 ########################################################################################
 
+connected = False
 @sockets.on("connect")
 def connect(sid, data):
+    global connected
+    connected = True
     show("%s connected" % sid)
 
 @sockets.on("disconnect")
@@ -68,3 +71,8 @@ def __init__(app, sockets):
 
 thread = threading.Thread(target=__init__, args=(app, sockets))
 thread.start()
+
+########################################################################################
+
+while not connected:
+    pass
