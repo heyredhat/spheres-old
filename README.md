@@ -23,7 +23,7 @@ To assign an "inner value" to a View use:
 
 `a << (a + 1)`
 
-Make sure to include the parentheses otherwise python will interpret this as `(a << a) + 1`. You can retrieve the underlying object of a View with `a.get()`.
+Make sure to include the parentheses because otherwise python will interpret this as `(a << a) + 1`. You can retrieve the underlying object of a View with `a.get()`.
 
 Meanwhile, however, when you `import spheres` a webserver built on flask and socketio starts in a background thread, which provides 3D visualizations of certain datatypes using three.js in the browser. Note that the `import` won't complete until the server has accepted a connection via the browser. You can specify the port using a commandline argument:
 
@@ -59,14 +59,12 @@ View(obj,\
 		to_client=lambda view: <view to viz_data>,\
 		from_client=lambda viz_data: <viz_data to inner obj>,\
 		js_class="<javascript class name>",\
-		requires_flush=["these", "methods", "will", "trigger", "an", "update", "from", "python", "to", "javascript"])
+		requires_flush=["these", "methods", "will", "trigger", "an", "update"])
 ```
 
-The default View has a simple `to_client` function: 
-`lambda view: str(view)`
-and its `from_client` function does nothing. Its `js_class` is "View," and nothing special requires flushing.
+The default View has a simple `to_client` function: `lambda view: str(view)` and its `from_client` function does nothing. Its `js_class` is "View," and nothing special requires flushing.
 
-Currently, the only other View which has been implemented is "Sphere." It's defined in the following way.
+Currently, the only other View which has been implemented is Sphere. It's defined in the following way.
 
 ```
 def Sphere(obj):
@@ -90,7 +88,7 @@ a = Sphere(qt.rand_ket(3))
 a
 ```
 
-Updating `b` in python, of course, updates the constellation. But because the relationship is bidirectional, if we drag the stars around in the visual representation, `b` automatically reflects the change.
+Updating `a` in python, of course, updates the constellation. But because the relationship is bidirectional, if we drag the stars around in the visual representation, `a` automatically reflects the change in python.
 
 We can easily see this by using one View to "listen" to another View.
 
@@ -101,7 +99,7 @@ b.listen(a, lambda o: str(o))
 ```
 Here, `View("")` is, of course, a wrapper around a string object. The effect is that every time `a` changes, `b` reflects the change: specifically, the inner object of `b` is set to the return value of the provided lambda to which `a` is passed as `o`.
 
-In the browser, there should appear a sphere for `a` and a pane of `b`. It's clear that dragging the stars around the sphere updates the complex vector in real time, which is reflected in `b`. (If you're done listening, use `b.unlisten(a)`.)
+In the browser, there should appear a sphere for `a` and a pane for `b`. It's clear that dragging the stars around the sphere updates the complex vector in real time, which is reflected in `b`. (If you're done listening, use `b.unlisten(a)`.)
 
 Finally, consider:
 ```
@@ -110,6 +108,6 @@ u = (-1j*dt*qt.rand_herm(3)).expm()
 a.loop_for(5000, lambda o: u*o)
 ```
 
-The first line generates a unitary matrix representing quantum time evolution over a short interval dt. We can apply this unitary to our quantum state with `u*a`. It often happens we want to do this over and over again, animating the constellation. But for efficiency, we don't really need to update the visualization after *every* iteration, and in fact, doing so often overloads the sockets. So we have `loop_for` does. It takes optional parameters `rate` and `sleep`: a rate of 1/2 flushes updates to the browser after every other iteration; a rate of 1/3 flushes updates every three iterations, etc; and we can also sleep for a certain amount of time after each iteration. Generally, the default values are fine.
+The first line generates a random unitary matrix representing quantum time evolution over a short interval dt. We can apply this unitary to our quantum state with `u*a`. It often happens we want to do this over and over again, animating the constellation. But for efficiency, we don't really want to update the visualization after *every* iteration, and in fact, doing so often overloads the browser. So we have `loop_for`. It takes optional parameters `rate` and `sleep`: a rate of 1/2 flushes updates to the browser after every other iteration; a rate of 1/3 flushes updates every three iterations, etc; and we can also sleep for a certain amount of time after each iteration. Generally, the default values are fine.
 
 And that's all for now. 

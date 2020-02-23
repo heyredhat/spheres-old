@@ -13,6 +13,3 @@ v.listen(s, lambda sph: str(sph))
 
 u = (-1j*0.008*qt.rand_herm(n)).expm()
 s.loop_for(100, lambda sph: u*s)
-
-# make listeners bidirectional -> DM's
-# try subclassing
