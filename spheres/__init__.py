@@ -1,6 +1,8 @@
 import os
+import sys
 import json
 import flask
+import getopt
 import logging
 import socketio
 import eventlet
@@ -65,11 +67,20 @@ def call(sid, data):
 
 ########################################################################################
 
-def __init__(app, sockets):
+def __init__(app, sockets, port=8080):
     show_prelude()
-    app.run(threaded=True, port=8080)
+    app.run(threaded=True, port=port)
 
-thread = threading.Thread(target=__init__, args=(app, sockets))
+try:
+    arguments, values = getopt.getopt(sys.argv[1:], "p:", ["port="])
+    for arg, val in arguments:
+        if arg in ("-p", "--port"):
+            PORT = val
+except getopt.error as err:
+    print(str(err))
+    sys.exit(2)
+
+thread = threading.Thread(target=__init__, args=(app, sockets, PORT))
 thread.start()
 
 ########################################################################################
