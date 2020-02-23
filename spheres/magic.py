@@ -185,10 +185,10 @@ def roots_spin(roots):
 def spin_XYZ(spin):
     if isinstance(spin, qt.Qobj):
         spin = spin.full().T[0]
-    return [c_xyz(root) for root in poly_roots(spin_poly(spin))]
+    return [c_xyz(root).tolist() for root in poly_roots(spin_poly(spin))]
 
 def XYZ_spin(XYZ):
-    return poly_spin(roots_poly([xyz_c(xyz) for xyz in XYZ]))
+    return qt.Qobj(poly_spin(roots_poly([xyz_c(xyz) for xyz in XYZ])))
 
 ####################################################################
 

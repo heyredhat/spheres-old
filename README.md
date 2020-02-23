@@ -66,8 +66,8 @@ A view can be defined in the following way (in python):
 
 ```
 View(obj,\
-		to_client=lambda view: <view to viz_data>,\
-		from_client=lambda viz_data: <viz_data to inner obj>,\
+		to_client=lambda view: <view -> viz_data>,\
+		from_client=lambda viz_data: <viz_data -> inner obj>,\
 		js_class="<javascript class name>",\
 		requires_flush=["these", "methods", "will", "trigger", "an", "update"])
 ```
@@ -80,9 +80,9 @@ Currently, the only other View which has been implemented is Sphere. It's define
 def Sphere(obj):
 	return View(obj,\
 		 		to_client=lambda view:\
-				 	{"stars": [xyz.tolist() for xyz in spin_XYZ(view.get())],\
+				 	{"stars": spin_XYZ(view),\
 				 	 "phase": [1,0]},\
-		 		from_client=lambda data: qt.Qobj(XYZ_spin(data["stars"])),\
+		 		from_client=lambda viz_data: XYZ_spin(viz_data["stars"]),\
 		 		js_class="Sphere")
 ```
 
@@ -90,7 +90,7 @@ A Sphere represents the state of a "quantum spin" as a constellation of points o
 
 A quantum spin can be represented as finite dimensional complex vector. Eliding many details, if the components of a spin state in the |j, m> representation are interpreted as the coefficients of a polynomial, then the roots of that polynomial when stereographically projected from the complex plane to the 2-sphere along the axis of quantization correspond to a constellation of points. Each point or "star" contributes an angular momentum of 1/2 in its direction so that the total angular momentum axis is just the sum of the stars.
 
-The provided method `spin_XYZ` takes a `qt.Qobj` (or an `np.array`) representing a spin state and returns a list of the xyz coordinates of its stars. Conversely, the method `XYZ_spin` takes a list of xyz coordinates and returns its corresponding complex vector (as an `np.array`). We leave aside for now the "phase," which, to put it briefly, has to do with the fact that the roots of polynomials are only defined up to multiplcation by a complex scalar.
+The provided method `spin_XYZ` takes a `qt.Qobj` representing a spin state and returns a list of the xyz coordinates of its stars. Conversely, the method `XYZ_spin` takes a list of xyz coordinates and returns its corresponding complex vector. We leave aside for now the "phase," which, to put it briefly, has to do with the fact that the roots of polynomials are only defined up to multiplcation by a complex scalar.
 
 To create a Sphere for a random spin state, we can use: 
 ```
