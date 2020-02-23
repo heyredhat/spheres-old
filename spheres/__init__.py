@@ -71,6 +71,7 @@ def __init__(app, sockets, port=8080):
     show_prelude()
     app.run(threaded=True, port=port)
 
+PORT = 8080
 try:
     arguments, values = getopt.getopt(sys.argv[1:], "p:", ["port="])
     for arg, val in arguments:

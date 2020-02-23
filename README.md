@@ -2,6 +2,16 @@
 
 ## Installation
 
+First, make sure numpy, scipy, and cython are installed.
+
+```
+pip install numpy
+pip install scipy
+pip install cython
+```
+
+Then:
+
 `pip install spheres`
 
 ## Usage

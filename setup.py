@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="spheres", 
-    version="0.0.9",
+    version="0.1.2",
     author="Matthew Weiss",
     author_email="heyredhat@gmail.com",
     description="functorial visualization library with support for quantum mechanics",
@@ -18,9 +18,10 @@ setuptools.setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
     ],
+    setup_requires=["numpy", "scipy", "cython"],\
     install_requires=["flask", "python-socketio", "eventlet",\
-        "termcolor", "sympy", "numpy", "scipy", "qutip"],\
-   # python_requires=">=3.8",\
+        "termcolor", "sympy", "numpy", "scipy", "cython", "qutip"],\
+    python_requires=">=3",\
     package_data={
         "": ["templates/*",\
              "static/css/*",\
