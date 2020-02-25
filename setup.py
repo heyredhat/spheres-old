@@ -20,7 +20,7 @@ setuptools.setup(
     ],
     setup_requires=["numpy", "scipy", "cython"],\
     install_requires=["flask", "python-socketio", "eventlet",\
-        "termcolor", "sympy", "numpy", "scipy", "cython", "qutip"],\
+        "termcolor", "sympy", "numpy", "scipy", "cython", "qutip", "forbiddenfruit"],\
     python_requires=">=3",\
     package_data={
         "": ["templates/*",\

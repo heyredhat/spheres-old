@@ -66,12 +66,12 @@ def c_xyz(c, pole="south"):
 def xyz_c(xyz, pole="south"):
     x, y, z = xyz
     if (pole=="south"):
-        if z == -1:
+        if np.isclose(z,-1):
             return float("Inf")
         else:
             return x/(1+z) + 1j*y/(1+z)
     elif (pole=="north"):
-        if z == 1:
+        if np.isclose(z,1):
             return float("Inf")
         else:
             return x/(1-z) + 1j*y/(1-z)
@@ -104,7 +104,7 @@ def spinor_c(spinor):
         a, b = spinor.full().T[0]
     else:
         a, b = spinor
-    if a == 0:
+    if np.isclose(a,0):
         return float('Inf')
     else:
         return b/a
@@ -168,7 +168,7 @@ def roots_poly(roots):
     #Z = sympy.symbols("Z")
     #Poly = sympy.Poly(functools.reduce(lambda a, b: a*b, [Z-root for root in roots]), domain="CC")
     #return [0j]*poles + [complex(c) for c in Poly.all_coeffs()] + [0j]*zeros
-    return [0j]*poles + roots_coeffs(roots).tolist() + [0j]*(zeros-1)
+    return [0j]*poles + roots_coeffs(roots).tolist() #+ [0j]*(zeros-1)
 
 ####################################################################
 
@@ -188,6 +188,8 @@ def spin_XYZ(spin):
     return [c_xyz(root).tolist() for root in poly_roots(spin_poly(spin))]
 
 def XYZ_spin(XYZ):
+    #XYZ = [np.array(xyz) for xyz in XYZ]
+    #XYZ = [xyz/np.linalg.norm(xyz) for xyz in XYZ]
     return qt.Qobj(poly_spin(roots_poly([xyz_c(xyz) for xyz in XYZ])))
 
 ####################################################################

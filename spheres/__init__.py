@@ -8,6 +8,7 @@ import socketio
 import eventlet
 import threading
 import eventlet.wsgi
+import forbiddenfruit
 from termcolor import colored
 
 ########################################################################################
@@ -32,6 +33,7 @@ def show_prelude():
 ########################################################################################
 
 from spheres.view import *
+from spheres.expressions import *
 from spheres.magic import *
 from spheres.sphere import *
 

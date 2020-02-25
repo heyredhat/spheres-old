@@ -188,7 +188,7 @@ class Sphere extends View {
 				event.object.position.setX(xyz.x);
 				event.object.position.setY(xyz.y);
 				event.object.position.setZ(xyz.z);
-				if (Math.random() < 1/8) {
+				if (Math.random() < 1/4) {
 					this.call("refresh_from_client")({"stars": this.stars});
 				}
 			} else if (event.object == this.vsphere) {

@@ -25,7 +25,7 @@ class jsCall:
                     null = True
                     finished = True
                     raise NameError("name '%s' of %s is not defined"\
-                                     % (returned["attribute"],\
+                                     % (error["attribute"],\
                                         type(self.view).__name__))
                 elif error.startswith("client object"):
                     sockets.emit("create", {"class": self.view.__js_class__,\
@@ -57,7 +57,6 @@ class jsCall:
 
 class View(object):
     views = {}
-    expression_types = []
     __slots__ = ["_obj", "__weakref__"]
 
     def __init__(self, obj, *args, **kwargs):
@@ -81,10 +80,10 @@ class View(object):
         if "requires_flush" in kwargs:
             self.requires_flush.extend(kwargs["requires_flush"])
 
-        self.local = kwargs["local"] if "local" in kwargs else False
-        self.name = kwargs["name"] if "name" in kwargs else ""
-   
     ########################################################################################
+
+    def test(self):
+        print('original')
 
     @property
     def __class__(self):
@@ -93,35 +92,31 @@ class View(object):
     def get(self):
         return object.__getattribute__(self, "_obj")
 
-    def set(self, value, silent=False, local=False, exclude=[]):
-        if value.__class__ in self.expression_types:
-            value.__implement_set__(self, silent=silent)
+    def set(self, value, silent=False, internal=None, local=False, exclude=[]):
+        if type(value) == self.__inner_class__:
+            object.__setattr__(self, "_obj", value)
             if not silent:
-                jsCall(self, "refresh_from_server")(self.__to_client__(self))
+                self.flush(internal=internal, local=local, exclude=exclude)
         else:
-            if type(value) == self.__inner_class__:
-                object.__setattr__(self, "_obj", value)
-                if not silent:
-                    self.flush(local=local, exclude=exclude)
-            else:
-                raise Exception("can't set %s to %s!" % (self.__inner_class__.__name__,
-                                                        type(value).__name__))
+            raise Exception("can't set %s to %s!" % (self.__inner_class__.__name__,
+                                                    type(value).__name__))
 
     def __lshift__(self, value):
-        self.set(value)
+        if hasattr(value, "__internal__"):
+            self.set(value, local=True, internal=value.__internal__)
+        else:
+            self.set(value)
         return self
 
-    def set_from_view(self, view):
-        self.set(view.get())
-
-    def flush(self, local=False, exclude=[]):
-        for uuid, listener_data in self.listeners.items():
-            with_func = listener_data["with_func"]
-            expression_type = listener_data["expression_type"]
-            if uuid in View.views and uuid not in exclude and expression_type == None:
-                View.views[uuid].set(with_func(self), exclude=[self.uuid])
-        if not local and not self.local:
-            jsCall(self, "refresh_from_server")(self.__to_client__(self))
+    def flush(self, local=False, internal=None, exclude=[]):
+        for uuid, with_func in self.listeners.items():
+            if uuid in View.views and uuid not in exclude:
+                if self.uuid not in View.views[uuid].listeners:
+                    View.views[uuid] << (with_func(self, View.views[uuid], internal))
+                else:
+                    View.views[uuid].set(with_func(self, View.views[uuid], internal), exclude=[self.uuid])
+        if not local:
+            return jsCall(self, "refresh_from_server")(self.__to_client__(self))
 
     ########################################################################################
 
@@ -131,16 +126,15 @@ class View(object):
 
     ########################################################################################
 
-    def listen(self, to_whom, with_func, expression_type=None):
-        to_whom.listeners[self.uuid] = {"with_func": with_func,\
-                                        "expression_type": expression_type}
+    def listen(self, to_whom, with_func):
+        to_whom.listeners[self.uuid] = with_func
 
     def unlisten(self, to_whom):
         del to_whom.listeners[self.uuid]
 
     ########################################################################################
 
-    def loop_for(self, n, func, rate=1/6, sleep=0.0001):
+    def loop_for(self, n, func, rate=1/8, sleep=0.001):
         if n != 0:
             for i in range(n):
                 if i % int(1/rate) == 0:
@@ -170,6 +164,9 @@ class View(object):
                             else val ) for key, val in kwargs.items()])
                     value = attribute(*args)
                     self.flush() if name in self.requires_flush else None
+                    #return value
+                    if value.__class__.__name__ not in dir(__builtins__)+["ndarray"]:
+                        value.__internal__ = self
                     return value
                 return __wrapper__
             else:
@@ -239,6 +236,10 @@ class View(object):
                             else val ) for key, val in kwargs.items()])
                 value = getattr(object.__getattribute__(self, "_obj"), name)(*args, **kwargs)
                 self.flush() if name in self.requires_flush else None
+                #return value
+                if value.__class__.__name__ not in dir(__builtins__) and\
+                    "numpy" not in value.__class__.__name__:
+                    value.__internal__ = self
                 return value
             return method
         namespace = {}
@@ -259,13 +260,5 @@ class View(object):
         inself = object.__new__(inner_class)
         inner_class.__init__(inself, obj, *args, **kwargs)
         return inself
-
-    @classmethod
-    def register_expression_type(cls, expression_type):
-        View.expression_types.append(expression_type)
-
-    @classmethod
-    def unregister_expression_type(cls, expression_type):
-        del View.expression_types[expression_type]
 
 ########################################################################################
