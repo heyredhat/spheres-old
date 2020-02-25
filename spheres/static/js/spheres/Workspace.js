@@ -4,6 +4,7 @@ class Workspace {
 		this.setup_renderer = this.setup_renderer.bind(this);
 		this.setup_scene = this.setup_scene.bind(this);
 		this.setup_cameras = this.setup_cameras.bind(this);
+		this.setup_mouse = this.setup_mouse.bind(this)
 		this.setup_postprocessing = this.setup_postprocessing.bind(this);
 		this.setup_models = this.setup_models.bind(this);
 		this.get_model = this.get_model.bind(this);
@@ -20,6 +21,7 @@ class Workspace {
 		this.setup_renderer();
 		this.setup_scene();
 		this.setup_cameras();
+		this.setup_mouse();
 		this.setup_postprocessing();
 		this.setup_models();
 		this.loop();
@@ -98,6 +100,26 @@ class Workspace {
 			this.camera.aspect = this.div.offsetWidth/this.div.offsetHeight;
 			this.camera.updateProjectionMatrix();
 		}.bind(this));
+	}
+
+	setup_mouse() {
+		this.raycaster = new THREE.Raycaster();
+		this.mouse = new THREE.Vector2();
+		this.dblclick = {};
+
+		window.addEventListener('dblclick', 
+			function (event) {
+				this.mouse.x = (event.clientX/window.innerWidth)*2 - 1;
+				this.mouse.y = -(event.clientY/window.innerHeight)*2 + 1;
+				this.raycaster.setFromCamera(this.mouse, this.camera);
+				var intersects = this.raycaster.intersectObjects(this.scene.children);
+				for (var i = 0; i < intersects.length; i++) {
+					var obj = intersects[i].object;
+					if (this.dblclick[obj.uuid] != undefined) {
+						this.dblclick[obj.uuid](event, intersects);
+					}
+				}
+			}.bind(this), false);
 	}
 
 	setup_postprocessing() {

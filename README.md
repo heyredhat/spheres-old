@@ -111,7 +111,7 @@ Here, `View("")` is, of course, a wrapper around a string object. The effect is 
 
 In the browser, there should appear a sphere for `a` and a pane for `b`. It's clear that dragging the stars around the sphere updates the complex vector in real time, which is reflected in `b`. (If you're done listening, use `b.unlisten(a)`.)
 
-Finally, consider:
+Next, consider:
 ```
 dt = 0.008
 u = (-1j*dt*qt.rand_herm(3)).expm()
@@ -119,5 +119,75 @@ a.loop_for(5000, lambda o: u*o)
 ```
 
 The first line generates a random unitary matrix representing quantum time evolution over a short interval dt. We can apply this unitary to our quantum state with `u*a`. It often happens we want to do this over and over again, animating the constellation. But for efficiency, we don't really want to update the visualization after *every* iteration, and in fact, doing so often overloads the browser. So we have `loop_for`. It takes optional parameters `rate` and `sleep`: a rate of 1/2 flushes updates to the browser after every other iteration; a rate of 1/3 flushes updates every three iterations, etc; and we can also sleep for a certain amount of time after each iteration. Generally, the default values are fine.
+
+Finally:
+
+Let's create a four dimensional pure state. We can represent it with a constellation of three stars; but it also corresponds to a (possibly entangled) state of two spin 1/2 particles (aka qubits), each with a partial state. Note that we can name a View, which will override its string representation. 
+
+```
+a = Sphere(qt.rand_ket(4), name="a")
+a.dims = [[2,2], [1,1]]
+```
+
+We can use the `partials` function to get Views for the states of the subsystems `b` and `c`:
+
+```
+b, c = partials(a)
+b.name = "b"
+c.name = "c"
+```
+
+`b` and `c` are Views on 2x2 density matrices. They each listen to the pure state `a` so that if `a` is modified, `b` and `c` are refreshed as well (using the ptrace operator).
+
+But suppose we evolve 'b' with some linear operator; we want this transformation to be upgraded to an operator that acts on the pure state that respects the tensor product structure (in other words, with identities for the other subspaces), so that `a` can listen to `b` and `c` in turn.
+
+We want 
+
+`(b -> u.dag()*b*u) -> (a -> U*a)`, where U is the tensor product of u and the 2x2 identity.
+
+This is automatically provided. For example, consider a projector:
+
+```
+p = View(qt.basis(2,0)*qt.basis(2,0).dag(), name="p")
+b << (p*b*p)
+```
+
+gives the same result as
+
+```
+P = View(qt.tensor(qt.basis(2,0)*qt.basis(2,0).dag(), qt.identity(2)), name="P")
+a << (P*a)
+```
+
+Here's how it works behind the scenes. If we have a product of operators with Views wrapped around them, e.g. `p*a*p`, this actually returns an OperatorExpression object, which has kept track of the operators along the way without actually multiplying them. If you check its string representation, it should be: ['p', 'a', 'p']. The OperatorExpression simulates the attributes of normal Qobj, and its numerical form can be retrieved with the `reduced()` method. 
+
+When an OperatorExpression is set to a View which is contained in that expression, something special happens. For example, the `partials` function adds the pure state `a` as a listener to each of the partials `b` and `c`, passing an optional parameter expression_type=OperatorExpression.
+
+```
+listen(to_whom, with_func, expression_type=None):
+```
+
+When an OperatorExpression is set to a View that appears within it, and that View has a listener with expression_type=OperatorExpression, then the assignment operation is handled by the OperatorExpression class, including flushing updates to the listeners. In this case, it takes the operators on the right hand side of the View in the expression, multiplies them, tensors it with appropriate identities so that it can act on the pure state, performs the transformation, and finally flushes the changes to the pure state, telling it to exclude this subsystem in its own flushes, so as to avoid infinite regress. So far this is the only type of Expression which has been implemented, but one can easily add more by registering them with the View class:
+
+`View.register_expression_type(ExpressionClass)`
+
+You can confirm that A() and B() are more or less inverses.
+
+```
+h = qt.rand_herm(2)
+u = View((-1j*h*dt).expm(), name="u")
+U = View(qt.tensor((-1j*dt*h/8).expm(), qt.identity(2)), name="U")
+
+def A():
+	a.loop_for(200, lambda v: U*a)
+
+def B():
+	b.loop_for(200, lambda v: u*v*u.dag())
+
+A()
+B()
+```
+
+Note, however, the factor of 1/8 in the definition of U. Future versions will obviate the need for this by keeping track of the underlying phase and hermitian matix that are exponentiated to give a certain unitary. 
 
 And that's all for now. 

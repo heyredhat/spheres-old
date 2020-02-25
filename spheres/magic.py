@@ -4,6 +4,7 @@ import numpy as np
 import functools
 import qutip as qt
 import itertools
+import scipy
 
 ####################################################################
 

@@ -59,6 +59,12 @@ class Sphere extends View {
 				workspace.scene.add(this.varrow);
 				this.redraw();
 		}.bind(this));
+
+		workspace.dblclick[this.vsphere.uuid] = 
+			function(event, intersects) {
+				this.destroy();
+		}.bind(this);
+
 	}
 
 	/****************************************************/

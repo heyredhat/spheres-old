@@ -7,6 +7,7 @@ import logging
 import socketio
 import eventlet
 import threading
+import webbrowser
 import eventlet.wsgi
 import forbiddenfruit
 from termcolor import colored
@@ -32,9 +33,9 @@ def show_prelude():
 
 ########################################################################################
 
+from spheres.magic import *
 from spheres.view import *
 from spheres.expressions import *
-from spheres.magic import *
 from spheres.sphere import *
 
 ########################################################################################
@@ -85,6 +86,8 @@ except getopt.error as err:
 
 thread = threading.Thread(target=__init__, args=(app, sockets, PORT))
 thread.start()
+
+webbrowser.open_new_tab("http://localhost:8080")
 
 ########################################################################################
 
