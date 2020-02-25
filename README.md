@@ -164,7 +164,7 @@ Here's how it works behind the scenes. If we have a product of operators with Vi
 When an OperatorExpression is set to a View which is contained in that expression, something special happens. For example, the `partials` function adds the pure state `a` as a listener to each of the partials `b` and `c`, passing an optional parameter expression_type=OperatorExpression.
 
 ```
-listen(to_whom, with_func, expression_type=None):
+listen(to_whom, with_func, expression_type=None)
 ```
 
 When an OperatorExpression is set to a View that appears within it, and that View has a listener with expression_type=OperatorExpression, then the assignment operation is handled by the OperatorExpression class, including flushing updates to the listeners. In this case, it takes the operators on the right hand side of the View in the expression, multiplies them, tensors it with appropriate identities so that it can act on the pure state, performs the transformation, and finally flushes the changes to the pure state, telling it to exclude this subsystem in its own flushes, so as to avoid infinite regress. So far this is the only type of Expression which has been implemented, but one can easily add more by registering them with the View class:

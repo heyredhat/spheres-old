@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="spheres", 
-    version="0.2.0.3",
+    version="0.2.0.4",
     author="Matthew Weiss",
     author_email="heyredhat@gmail.com",
     description="functorial visualization library with support for quantum mechanics",

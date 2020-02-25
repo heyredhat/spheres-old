@@ -132,9 +132,9 @@ class Sphere extends View {
 				quaternion.setFromUnitVectors(new THREE.Vector3(0,0,-1), total_star.clone().normalize());
 				this.varrow.rotation.set(0, 0, 0);
 				this.varrow.applyQuaternion(quaternion);
-				this.varrow.scale.x = total_star.length()/50;
-				this.varrow.scale.y = total_star.length()/50;
-				this.varrow.scale.z = total_star.length()/50;
+				this.varrow.scale.x = total_star.length()/100;
+				this.varrow.scale.y = total_star.length()/100;
+				this.varrow.scale.z = total_star.length()/100;
 			}
 		}
 	}
