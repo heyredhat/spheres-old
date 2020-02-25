@@ -9,7 +9,6 @@ import eventlet
 import threading
 import webbrowser
 import eventlet.wsgi
-import forbiddenfruit
 from termcolor import colored
 
 ########################################################################################

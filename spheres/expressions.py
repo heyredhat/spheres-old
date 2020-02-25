@@ -1,6 +1,6 @@
 from spheres import *
-import copy
 import qutip as qt
+import copy
 
 ########################################################################################
 
